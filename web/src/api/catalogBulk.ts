@@ -6,6 +6,7 @@ export interface CatalogBulkFilters {
   type?: StockItemType
   active?: boolean
   q?: string
+  location?: string
   only_below_min?: boolean
   warehouse_id?: number
   manufacturer_id?: number

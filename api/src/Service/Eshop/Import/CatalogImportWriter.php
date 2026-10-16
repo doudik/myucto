@@ -17,7 +17,7 @@ use MyInvoice\Service\Eshop\ProductRelationService;
 
 final class CatalogImportWriter
 {
-    private const CORE = ['sku', 'name', 'unit', 'ean', 'item_type', 'vat_rate_id', 'min_qty', 'is_active', 'note'];
+    private const CORE = ['sku', 'name', 'unit', 'ean', 'item_type', 'vat_rate_id', 'min_qty', 'is_active', 'note', 'location_text'];
     private const PRODUCT = ['manufacturer_id', 'warranty_months', 'delivery_days', 'weight_g', 'export_eshop',
         'is_stocked', 'pricing_base', 'categories', 'tag_ids', 'i18n', 'attributes', 'fees'];
 

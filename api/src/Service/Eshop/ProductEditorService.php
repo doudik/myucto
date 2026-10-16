@@ -11,6 +11,7 @@ use MyInvoice\Repository\StockItemRepository;
 use MyInvoice\Repository\StockItemVendorRepository;
 use MyInvoice\Service\Eshop\Pricing\PriceWriteService;
 use MyInvoice\Service\Stock\StockItemIntrastatValidator;
+use MyInvoice\Service\Stock\StockItemLocation;
 use MyInvoice\Support\Slugifier;
 
 final class ProductEditorService
@@ -169,7 +170,18 @@ final class ProductEditorService
             ...$this->intrastat->normalize($input, $existing),
             'is_active' => (bool) (array_key_exists('is_active', $input) ? ($input['is_active'] ?? true) : ($existing['is_active'] ?? true)),
             'note' => $this->stringOrNull($pick('note')),
+            ...$this->location($input),
         ];
+    }
+
+    /** @param array<string,mixed> $input @return array{location_text?:?string} */
+    private function location(array $input): array
+    {
+        try {
+            return StockItemLocation::fromInput($input);
+        } catch (\InvalidArgumentException $e) {
+            throw new EshopException('validation_failed', $e->getMessage(), 400);
+        }
     }
 
     private function stringOrNull(mixed $value): ?string

@@ -578,7 +578,7 @@ final class AnonymizationPolicy
         'stock_item_templates' => ['content_json' => 'keep', 'name' => 'keep'],
         'stock_item_units' => ['ean' => 'keep', 'unit_code' => 'keep'],
         'stock_item_vendors' => ['currency_code' => 'keep', 'note' => 'text', 'vendor_sku' => 'keep'],
-        'stock_items' => ['default_sale_unit' => 'keep', 'ean' => 'keep', 'expense_account_code' => 'keep', 'intrastat_cn8_code' => 'keep', 'intrastat_country_of_origin' => 'keep', 'intrastat_supplementary_unit' => 'keep', 'name' => 'keep', 'note' => 'text', 'revenue_account_code' => 'keep', 'sku' => 'keep', 'unit' => 'keep'],
+        'stock_items' => ['default_sale_unit' => 'keep', 'ean' => 'keep', 'expense_account_code' => 'keep', 'intrastat_cn8_code' => 'keep', 'intrastat_country_of_origin' => 'keep', 'intrastat_supplementary_unit' => 'keep', 'location_text' => 'keep', 'name' => 'keep', 'note' => 'text', 'revenue_account_code' => 'keep', 'sku' => 'keep', 'unit' => 'keep'],
         'stock_landed_costs' => ['description' => 'text'],
         'stock_locales' => ['code' => 'keep', 'name' => 'keep'],
         'stock_media' => ['alt_text' => 'keep', 'mime_type' => 'keep', 'original_name' => 'file_name', 'storage_key' => 'keep', 'title' => 'keep'],

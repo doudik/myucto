@@ -26,6 +26,7 @@ use MyInvoice\Service\Stock\StockValuation;
 use MyInvoice\Service\Stock\StockItemLifecycleService;
 use MyInvoice\Service\Stock\StockItemDuplicationService;
 use MyInvoice\Service\Stock\StockItemIntrastatValidator;
+use MyInvoice\Service\Stock\StockItemLocation;
 use MyInvoice\Service\Stock\StockException;
 use MyInvoice\Service\Stock\StockItemTemplateService;
 use MyInvoice\Support\Pagination;
@@ -36,7 +37,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * Skladové karty (Epic SKLAD).
  *
  *   GET    /api/stock/items/search                 — našeptávač (autocomplete)
- *   GET    /api/stock/items                        — seznam, stránkovaný (filtry: type, active, q, only_below_min)
+ *   GET    /api/stock/items                        — seznam, stránkovaný (filtry: type, active, q, location, only_below_min, …)
+ *   GET    /api/stock/items/locations              — použitá umístění karet (nabídka pro editor a filtr)
  *   POST   /api/stock/items                        — nová karta
  *   GET    /api/stock/items/{id}                   — detail
  *   PUT    /api/stock/items/{id}                   — úprava
@@ -210,6 +212,15 @@ final class StockItemAction
         }
         unset($row);
         return $rows;
+    }
+
+    public function locations(Request $request, Response $response): Response
+    {
+        $supplierId = $this->currentSupplierId($request);
+        if (!$this->guardStockEnabled($this->db, $supplierId, $response, $err)) {
+            return $err;
+        }
+        return Json::ok($response, $this->items->locations($supplierId));
     }
 
     public function get(Request $request, Response $response, array $args): Response
@@ -646,6 +657,7 @@ final class StockItemAction
 
         try {
             $intrastat = $this->intrastat->normalize($body, $existing);
+            $location = StockItemLocation::fromInput($body);
         } catch (\InvalidArgumentException $e) {
             return [[], Json::error($response, 'validation_failed', $e->getMessage(), 400)];
         }
@@ -672,6 +684,7 @@ final class StockItemAction
             'note'                   => array_key_exists('note', $body)
                 ? (trim((string) $body['note']) !== '' ? trim((string) $body['note']) : null)
                 : ($existing['note'] ?? null),
+            ...$location,
         ];
         return [$data, null];
     }

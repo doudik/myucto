@@ -997,7 +997,8 @@
         "2013_client_email_isdoc_override.sql",
         "2014_client_ai_extraction.sql",
         "2015_client_bank_permissions.sql",
-        "2016_invoice_item_tracking.sql"
+        "2016_invoice_item_tracking.sql",
+        "2026_stock_item_location_text.sql"
     ],
     "tables": {
         "abra_flexi_connections": {
@@ -20675,6 +20676,7 @@
                 "is_stocked": "tinyint(1) NOT NULL DEFAULT 1",
                 "item_type": "enum('material','goods','product') NOT NULL DEFAULT 'goods'",
                 "lifecycle_status": "enum('draft','ready','retired') NOT NULL DEFAULT 'ready'",
+                "location_text": "varchar(100) NULL DEFAULT NULL",
                 "manufacturer_id": "bigint(20) unsigned NULL DEFAULT NULL",
                 "min_qty": "decimal(14,3) NULL DEFAULT NULL",
                 "name": "varchar(255) NOT NULL",
@@ -20700,6 +20702,7 @@
                 "idx_si_manufacturer": "BTREE (manufacturer_id)",
                 "idx_si_supplier_active": "BTREE (supplier_id, is_active, item_type)",
                 "idx_si_supplier_lifecycle": "BTREE (supplier_id, lifecycle_status, is_active)",
+                "idx_si_supplier_location": "BTREE (supplier_id, location_text)",
                 "idx_si_supplier_name": "BTREE (supplier_id, name)",
                 "uq_si_supplier_id": "UNIQUE BTREE (supplier_id, id)",
                 "uq_si_supplier_sku": "UNIQUE BTREE (supplier_id, sku)"

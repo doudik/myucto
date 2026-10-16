@@ -432,9 +432,11 @@ Vedle hledání podle SKU, názvu nebo EAN jsou rovnou **výrobce, dodavatel, ka
 a dostupnost**. Kategorie zahrnuje i své podkategorie. Rozbalené **Filtry** přidávají
 typ karty, sklad, štítky, chybějící obrázek, kategorii, cenu, výrobce či EAN,
 rozsah množství a filtrovatelný atribut. Sklad omezí stav a hodnotu na vybraný sklad.
-Podmínky platí pro celý katalog, ne jen pro zobrazenou stránku.
+Jakmile má aspoň jedna karta vyplněné **umístění**, přibude i filtr **Umístění**
+s nabídkou použitých hodnot. Podmínky platí pro celý katalog, ne jen pro zobrazenou
+stránku.
 
-Hledání od tří znaků prochází i **sériová čísla a šarže** kusů na kartě a **textové
+Hledání prochází i umístění karty. Od tří znaků prochází i **sériová čísla a šarže** kusů na kartě a **textové
 parametry** karty (například VIN nebo výrobní číslo uložené v parametru). Stačí část
 čísla. Když karta vyhoví jen takto, zobrazí se pod jejím názvem, co hledání našlo,
 například „Sériové číslo: …“ nebo „VIN: …“. Stejně hledá i výběr karty na řádku
@@ -453,7 +455,7 @@ plného detailu nebo editoru. **Import zboží** v liště vede na import katalo
 Sloupce: **SKU**, **Název**, **Typ**, **MJ** (měrná jednotka), **Stav** (aktuální
 množství, červeně a tučně, pokud je pod nastaveným minimem), **Hodnota** (ocenění
 stavu v Kč), **Prům. cena** (dopočtená průměrná pořizovací cena za jednotku),
-volitelně i **Prodejní cena**, **Min. zásoba** a **Aktivní**. Stav a hodnota se
+volitelně i **Prodejní cena**, **Min. zásoba**, **Umístění** a **Aktivní**. Stav a hodnota se
 počítají ze skutečných skladových pohybů v okamžiku zobrazení stránky, ne z uložených
 souhrnných čísel karty.
 
@@ -478,6 +480,11 @@ Pole editoru nové karty:
 - **Měrná jednotka** (výchozí „ks“), **EAN**, **sazba DPH** (výchozí do řádku
   faktury), **prodejní cena bez DPH** (výchozí do řádku faktury) a **minimální
   zásoba**. Klesne-li stav pod ni, karta se v seznamu i sestavách zvýrazní.
+- **Umístění**: volný text, kde kus fyzicky je, například „Showroom“ nebo „U partnera“
+  (nejvýš 100 znaků). Pole nabízí hodnoty použité u jiných karet, aby se stejné místo
+  nepsalo pokaždé jinak. Umístění nemění sklad, stav ani ocenění, slouží k přehledu
+  a filtrování. Smažete ho vyprázdněním pole. Duplikace karty ani šablona ho
+  nepřenáší, nová karta začíná bez umístění.
 - **Poznámka** a příznak **Aktivní**. Neaktivní kartu jde jen deaktivovat, ne
   smazat, aby zůstala historie pohybů.
 
@@ -538,7 +545,8 @@ posune do viditelné části lišty.
 
 #### 37.12.2.3 Detail karty a skladová kniha
 
-Kliknutím na řádek v seznamu otevřete **detail karty**: dlaždice s počátečním
+Kliknutím na řádek v seznamu otevřete **detail karty**. Pod názvem je SKU, typ,
+měrná jednotka a vyplněné umístění karty. Následují dlaždice s počátečním
 stavem, prodejní cenou, minimální zásobou a EAN, pod nimi záložka **Pohyby**, tedy
 kompletní **skladová kniha** karty (datum, doklad s prokliknutím, sklad, množství
 se znaménkem, jednotková cena, hodnota a **běžná bilance** po každém řádku).
@@ -908,7 +916,10 @@ hláškou „Sklad nelze smazat - má nenulový stav nebo skladové pohyby. Deak
 místo mazání." a nabídne deaktivaci.
 
 Sklad lze rozdělit na volitelné **lokace** s vlastním kódem a názvem. Lokace vždy
-patří právě jednomu skladu a nelze ji při editaci přesunout jinam. U karet se
+patří právě jednomu skladu a nelze ji při editaci přesunout jinam. Lokace se liší od
+**umístění karty** ([§ 37.12.2](#37122-skladove-karty)): lokaci určuje skladový pohyb
+sledovaného kusu, umístění je ruční poznámka na kartě a může popisovat i místo mimo
+sklad. U karet se
 sledováním šarží nebo sériových čísel může příjemka, výdejka a převodka určit
 zdrojovou a cílovou lokaci. Karta bez zapnutého sledování dál používá běžný stav
 skladu a při fakturaci ani při skladovém pohybu nevyžaduje žádnou lokaci.
@@ -1006,7 +1017,8 @@ nalezenou na skladu**).
 
 - **Stav zásob k datu** ukazuje aktuální množství, průměrnou cenu a hodnotu po
   jednotlivých kartách a skladech k okamžiku zobrazení. Řádky pod nastaveným minimem
-  se zvýrazní. Filtr je jen na sklad.
+  se zvýrazní. Má-li některá karta vyplněné umístění, zobrazí se i sloupec
+  **Umístění**. Filtr je jen na sklad.
 - **Ocenění k datu** poskytne přehled **k historickému datu**. Výpočet běží jako úloha
   na pozadí a zobrazuje průběh. Hotové výsledky lze stránkovat. Opakovaný výpočet
   využívá uložené snapshoty, změna skladových pohybů dotčené snapshoty zneplatní.

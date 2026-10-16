@@ -220,6 +220,8 @@ async function exportFile(format: 'pdf' | 'xlsx') {
 }
 
 const statusRows = computed(() => statusReport.value?.items ?? [])
+// Sloupec umístění jen tam, kde ho firma na kartách používá.
+const statusHasLocation = computed(() => statusRows.value.some(r => !!r.location_text))
 const valuationRows = computed(() => valuationResult.value?.items ?? valuationReport.value?.items ?? [])
 
 onMounted(async () => {
@@ -370,6 +372,7 @@ onBeforeUnmount(() => { clearValuationTimer(); ++valuationGeneration; if (salesS
                 <th class="px-3 py-2 text-left font-medium">{{ t('stock.reports.col_sku') }}</th>
                 <th class="px-3 py-2 text-left font-medium">{{ t('stock.reports.col_name') }}</th>
                 <th class="px-3 py-2 text-left font-medium">{{ t('stock.reports.col_warehouse') }}</th>
+                <th v-if="statusHasLocation" class="px-3 py-2 text-left font-medium">{{ t('stock.reports.col_location') }}</th>
                 <th class="px-3 py-2 text-right font-medium">{{ t('stock.reports.col_qty') }}</th>
                 <th class="px-3 py-2 text-right font-medium">{{ t('stock.reports.col_avg_cost') }}</th>
                 <th class="px-3 py-2 text-right font-medium">{{ t('stock.reports.col_value') }}</th>
@@ -380,6 +383,7 @@ onBeforeUnmount(() => { clearValuationTimer(); ++valuationGeneration; if (salesS
                 <td class="px-3 py-2 font-mono text-xs">{{ r.sku }}</td>
                 <td class="px-3 py-2">{{ r.name }}</td>
                 <td class="px-3 py-2">{{ r.warehouse_name }}</td>
+                <td v-if="statusHasLocation" class="px-3 py-2">{{ r.location_text || '—' }}</td>
                 <td class="px-3 py-2 text-right font-mono">{{ r.qty }}</td>
                 <td class="px-3 py-2 text-right font-mono">{{ formatMoney(Number(r.avg_unit_cost)) }}</td>
                 <td class="px-3 py-2 text-right font-mono">{{ formatMoney(Number(r.value_total)) }}</td>
@@ -387,7 +391,7 @@ onBeforeUnmount(() => { clearValuationTimer(); ++valuationGeneration; if (salesS
             </tbody>
             <tfoot v-if="statusReport">
               <tr class="border-t-2 border-neutral-300 font-semibold bg-neutral-50">
-                <td class="px-3 py-2" colspan="5">{{ t('stock.reports.totals') }} ({{ statusReport.totals.count }})</td>
+                <td class="px-3 py-2" :colspan="statusHasLocation ? 6 : 5">{{ t('stock.reports.totals') }} ({{ statusReport.totals.count }})</td>
                 <td class="px-3 py-2 text-right font-mono">{{ formatMoney(Number(statusReport.totals.value_total)) }}</td>
               </tr>
             </tfoot>

@@ -30,7 +30,7 @@ final class StockLevelRepository
 
         $stmt = $this->db->pdo()->prepare(
             'SELECT sl.warehouse_id, sl.stock_item_id, sl.qty, sl.value_total, sl.avg_unit_cost,
-                    si.sku, si.name, si.unit, si.item_type, si.min_qty, si.is_active,
+                    si.sku, si.name, si.unit, si.item_type, si.min_qty, si.is_active, si.location_text,
                     w.code AS warehouse_code, w.name AS warehouse_name
                FROM stock_levels sl
                JOIN stock_items si ON si.id = sl.stock_item_id AND si.supplier_id = sl.supplier_id
@@ -67,7 +67,7 @@ final class StockLevelRepository
 
         $stmt = $this->db->pdo()->prepare(
             'SELECT sl.warehouse_id, sl.stock_item_id, sl.qty, sl.value_total, sl.avg_unit_cost,
-                    si.sku, si.name, si.unit, si.item_type, si.min_qty, si.is_active,
+                    si.sku, si.name, si.unit, si.item_type, si.min_qty, si.is_active, si.location_text,
                     w.code AS warehouse_code, w.name AS warehouse_name
                FROM stock_levels sl
                JOIN stock_items si ON si.id = sl.stock_item_id AND si.supplier_id = sl.supplier_id
@@ -142,6 +142,7 @@ final class StockLevelRepository
             'item_type'      => (string) $r['item_type'],
             'min_qty'        => $r['min_qty'] !== null ? (string) $r['min_qty'] : null,
             'is_active'      => (bool) $r['is_active'],
+            'location_text'  => $r['location_text'] !== null ? (string) $r['location_text'] : null,
             'warehouse_code' => (string) $r['warehouse_code'],
             'warehouse_name' => (string) $r['warehouse_name'],
         ];

@@ -17,6 +17,7 @@ export const CATALOG_EXPORT_FIELDS = [
   'weight_g',
   'warranty_months',
   'delivery_days',
+  'location_text',
   'i18n',
   'categories',
   'tag_ids',

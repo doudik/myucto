@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace MyInvoice\Service\Eshop\Import;
 
+use MyInvoice\Service\Stock\StockItemLocation;
 use MyInvoice\Support\LocaleNumber;
 
 final class CatalogImportProfile
 {
     public const FIELDS = [
         'id', 'external_id', 'sku', 'name', 'unit', 'ean', 'item_type', 'vat_rate_id',
-        'min_qty', 'is_active', 'note', 'manufacturer_code', 'manufacturer_id',
+        'min_qty', 'is_active', 'note', 'location_text', 'manufacturer_code', 'manufacturer_id',
         'warranty_months', 'delivery_days', 'weight_g', 'export_eshop', 'is_stocked',
         'pricing_base', 'categories', 'tag_ids', 'i18n', 'attributes', 'fees', 'price', 'prices',
         'master_id', 'master_external_id', 'variant_options', 'inheritance', 'relations', 'media_urls',
@@ -171,6 +172,7 @@ final class CatalogImportProfile
             'master_external_id' => 255,
             'unit', 'ean' => 20,
             'note' => 10000,
+            'location_text' => StockItemLocation::MAX_LENGTH,
             default => 255,
         };
         if (mb_strlen($value) > $limit || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value)) {

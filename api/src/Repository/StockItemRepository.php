@@ -42,7 +42,7 @@ final class StockItemRepository
          is_stocked, weight_g, intrastat_cn8_code, intrastat_country_of_origin, intrastat_net_mass_kg,
          intrastat_supplementary_unit, intrastat_supplementary_unit_coefficient,
          pricing_base, revenue_account_code, expense_account_code,
-         is_active, lifecycle_status, retired_at, note, row_version, created_at, updated_at';
+         is_active, lifecycle_status, retired_at, note, location_text, row_version, created_at, updated_at';
 
     public function __construct(private readonly Connection $db) {}
 
@@ -266,8 +266,9 @@ final class StockItemRepository
         if (!empty($filters['q'])) {
             $q = addcslashes((string) $filters['q'], '%_\\');
             $identifiers = self::identifierSearchable((string) $filters['q']);
-            $where[] = '(si.sku LIKE ? OR si.name LIKE ? OR si.ean LIKE ?'
+            $where[] = '(si.sku LIKE ? OR si.name LIKE ? OR si.ean LIKE ? OR si.location_text LIKE ?'
                 . ($identifiers ? ' OR ' . self::IDENTIFIER_SEARCH_SQL : '') . ')';
+            $whereParams[] = '%' . $q . '%';
             $whereParams[] = '%' . $q . '%';
             $whereParams[] = '%' . $q . '%';
             $whereParams[] = '%' . $q . '%';
@@ -276,6 +277,10 @@ final class StockItemRepository
             }
         }
 
+        if (isset($filters['location']) && $filters['location'] !== '') {
+            $where[] = 'si.location_text = ?';
+            $whereParams[] = (string) $filters['location'];
+        }
         if (!empty($filters['manufacturer_id'])) {
             $where[] = 'si.manufacturer_id = ?';
             $whereParams[] = (int) $filters['manufacturer_id'];
@@ -500,6 +505,24 @@ final class StockItemRepository
     }
 
     /**
+     * Použitá umístění karet firmy (abecedně, bez prázdných): nabídka pro editor
+     * karty a filtr seznamu, aby se stejné místo nepsalo pokaždé jinak.
+     *
+     * @return list<string>
+     */
+    public function locations(int $supplierId, int $limit = 500): array
+    {
+        $stmt = $this->db->pdo()->prepare(
+            'SELECT DISTINCT location_text FROM stock_items
+              WHERE supplier_id = ? AND location_text IS NOT NULL AND location_text <> \'\'
+              ORDER BY location_text ASC
+              LIMIT ' . max(1, min(2000, $limit))
+        );
+        $stmt->execute([$supplierId]);
+        return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /**
      * Autocomplete — aktivní karty dle sku/name/ean, přesného EAN balení (issue #17)
      * a od {@see IDENTIFIER_SEARCH_MIN_LENGTH} znaků i dle sériových čísel, šarží
      * a textových parametrů.
@@ -568,7 +591,7 @@ final class StockItemRepository
     /**
      * @param array{sku:string, name:string, item_type?:string, unit?:string, ean?:?string,
      *              vat_rate_id?:?int, sale_price_without_vat?:?string, min_qty?:?string,
-     *              is_active?:bool, note?:?string} $data
+     *              is_active?:bool, note?:?string, location_text?:?string} $data
      */
     public function insert(int $supplierId, array $data): int
     {
@@ -578,8 +601,8 @@ final class StockItemRepository
                 (supplier_id, sku, name, item_type, unit, tracking_mode, ean, vat_rate_id,
                  sale_price_without_vat, min_qty, intrastat_cn8_code, intrastat_country_of_origin,
                  intrastat_net_mass_kg, intrastat_supplementary_unit,
-                 intrastat_supplementary_unit_coefficient, is_active, note)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                 intrastat_supplementary_unit_coefficient, is_active, note, location_text)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         )->execute([
             $supplierId,
             (string) $data['sku'],
@@ -599,6 +622,7 @@ final class StockItemRepository
                 ? (string) $data['intrastat_supplementary_unit_coefficient'] : null,
             (int) ($data['is_active'] ?? true),
             $data['note'] ?? null,
+            $data['location_text'] ?? null,
         ]);
         return (int) $pdo->lastInsertId();
     }
@@ -606,7 +630,7 @@ final class StockItemRepository
     /**
      * @param array{sku:string, name:string, item_type?:string, unit?:string, ean?:?string,
      *              vat_rate_id?:?int, sale_price_without_vat?:?string, min_qty?:?string,
-     *              is_active?:bool, note?:?string} $data
+     *              is_active?:bool, note?:?string, location_text?:?string} $data
      */
     public function update(int $supplierId, int $id, array $data): bool
     {
@@ -620,6 +644,7 @@ final class StockItemRepository
                 intrastat_supplementary_unit = CASE WHEN ? THEN ? ELSE intrastat_supplementary_unit END,
                 intrastat_supplementary_unit_coefficient = CASE WHEN ? THEN ? ELSE intrastat_supplementary_unit_coefficient END,
                 is_active = CASE WHEN lifecycle_status = \'ready\' THEN ? ELSE 0 END, note = ?,
+                location_text = CASE WHEN ? THEN ? ELSE location_text END,
                 row_version = row_version + 1
               WHERE id = ? AND supplier_id = ?'
         );
@@ -646,6 +671,8 @@ final class StockItemRepository
                 ? (string) $data['intrastat_supplementary_unit_coefficient'] : null,
             (int) ($data['is_active'] ?? true),
             $data['note'] ?? null,
+            (int) array_key_exists('location_text', $data),
+            $data['location_text'] ?? null,
             $id,
             $supplierId,
         ]);
@@ -688,6 +715,7 @@ final class StockItemRepository
                 intrastat_supplementary_unit = CASE WHEN ? THEN ? ELSE intrastat_supplementary_unit END,
                 intrastat_supplementary_unit_coefficient = CASE WHEN ? THEN ? ELSE intrastat_supplementary_unit_coefficient END,
                 is_active = CASE WHEN lifecycle_status = \'ready\' THEN ? ELSE 0 END, note = ?,
+                location_text = CASE WHEN ? THEN ? ELSE location_text END,
                 row_version = row_version + 1
               WHERE id = ? AND supplier_id = ? AND row_version = ?'
         );
@@ -714,6 +742,8 @@ final class StockItemRepository
                 ? (string) $data['intrastat_supplementary_unit_coefficient'] : null,
             (int) ($data['is_active'] ?? true),
             $data['note'] ?? null,
+            (int) array_key_exists('location_text', $data),
+            $data['location_text'] ?? null,
             $id,
             $supplierId,
             $expectedVersion,

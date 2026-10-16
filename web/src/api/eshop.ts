@@ -309,6 +309,7 @@ export interface Product {
   intrastat_supplementary_unit_coefficient?: string | null
   is_active: boolean
   note: string | null
+  location_text?: string | null
   // e-shopová pole
   manufacturer_id: number | null
   warranty_months: number | null

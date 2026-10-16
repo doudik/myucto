@@ -70,6 +70,8 @@ export interface StockItem extends StockItemEffectivePrice {
   retired_at?: string | null
   row_version: number
   note: string | null
+  /** Umístění karty (volný text, kde kus fyzicky je); nezávislé na lokacích skladu. */
+  location_text?: string | null
   created_at: string
   updated_at: string
   /** Jen ve výsledku hledání (`q`). */
@@ -93,6 +95,8 @@ export interface StockItemPayload {
   intrastat_supplementary_unit_coefficient?: string | number | null
   is_active?: boolean
   note?: string | null
+  /** Vynechaný klíč umístění nemění, prázdný text ho smaže. */
+  location_text?: string | null
 }
 
 export type IntrastatDirection = 'dispatch' | 'arrival'
@@ -386,6 +390,8 @@ export interface StockItemListFilters {
   type?: StockItemType
   active?: boolean
   q?: string
+  /** Přesné umístění karty (`location_text`). */
+  location?: string
   only_below_min?: boolean
   warehouse_id?: number
   manufacturer_id?: number
@@ -576,6 +582,7 @@ export interface StockLevelRow {
   item_type: StockItemType
   min_qty: string | null
   is_active: boolean
+  location_text?: string | null
   warehouse_code: string
   warehouse_name: string
 }
@@ -1089,6 +1096,7 @@ export const stockApi = {
     const { ids, excluded_ids, ...filters } = options
     return api.post<StockItemNeighbors>(`/stock/items/${id}/neighbors`, { filters, ids, excluded_ids }, { signal: request.signal }).then(r => r.data)
   },
+  listItemLocations: () => api.get<string[]>('/stock/items/locations').then(r => r.data),
   searchItems: (q: string, limit = 50) =>
     api.get<StockItemSearchResult[]>('/stock/items/search', { params: { q, limit } }).then(r => r.data),
   getItem: (id: number, options: { signal?: AbortSignal } = {}) => api.get<StockItem>(`/stock/items/${id}`, { signal: options.signal }).then(r => r.data),

@@ -49,6 +49,7 @@ const tags = ref<Tag[]>([])
 const attributes = ref<Attribute[]>([])
 const attributeOptions = ref<Record<number, AttributeOption[]>>({})
 const vendors = ref<Client[]>([])
+const locations = ref<string[]>([])
 const selectedIds = ref(new Set<number>())
 const excludedIds = ref(new Set<number>())
 const allMatching = ref(false)
@@ -71,6 +72,7 @@ const filters = reactive({
   qty_max: '',
   attribute_id: '' as number | '',
   attribute_value: '',
+  location: '',
   only_below_min: false,
   active: true,
   q: '',
@@ -113,6 +115,7 @@ const activeFilterCount = computed(() => {
   if (filters.availability) n++
   if (filters.qty_min !== '' || filters.qty_max !== '') n++
   if (attributeFilters.value.length) n++
+  if (filters.location) n++
   if (filters.only_below_min) n++
   if (!filters.active) n++
   return n
@@ -129,6 +132,7 @@ const bulkFilters = computed<CatalogBulkFilters>(() => ({
   type: filters.type || undefined,
   active: filters.active || undefined,
   q: filters.q || undefined,
+  location: filters.location || undefined,
   only_below_min: filters.only_below_min || undefined,
   warehouse_id: filters.warehouse_id || undefined,
   manufacturer_id: filters.manufacturer_id || undefined,
@@ -150,6 +154,7 @@ function currentListFilters(): StockItemListFilters {
     type: filters.type || undefined,
     active: filters.active,
     q: filters.q || undefined,
+    location: filters.location || undefined,
     only_below_min: filters.only_below_min || undefined,
     warehouse_id: filters.warehouse_id || undefined,
     manufacturer_id: filters.manufacturer_id || undefined,
@@ -225,6 +230,7 @@ const filterChips = computed<FilterChip[]>(() => {
   if (filters.missing) chips.push({ key: 'missing', label: t('stock.items.filter_missing'), value: t(`stock.items.missing_${filters.missing}`) })
   if (filters.availability) chips.push({ key: 'availability', label: t('stock.items.filter_availability'), value: t(`stock.items.availability_${filters.availability}`) })
   if (filters.qty_min !== '' || filters.qty_max !== '') chips.push({ key: 'quantity', label: t('stock.items.filter_quantity'), value: `${filters.qty_min || '−'} – ${filters.qty_max || '∞'}` })
+  if (filters.location) chips.push({ key: 'location', label: t('stock.items.filter_location'), value: filters.location })
   if (attributeFilters.value.length) chips.push({ key: 'attribute', label: t('stock.items.filter_attribute'), value: `${selectedAttribute.value?.name}: ${filters.attribute_value}` })
   if (filters.only_below_min) chips.push({ key: 'below_min', value: t('stock.items.filter_below_min') })
   if (!filters.active) chips.push({ key: 'active', value: t('stock.items.filter_inactive_included') })
@@ -243,6 +249,7 @@ function clearFilter(key: string) {
     case 'availability': filters.availability = ''; break
     case 'quantity': filters.qty_min = ''; filters.qty_max = ''; break
     case 'attribute': filters.attribute_id = ''; filters.attribute_value = ''; break
+    case 'location': filters.location = ''; break
     case 'below_min': filters.only_below_min = false; break
     case 'active': filters.active = true; break
   }
@@ -312,6 +319,7 @@ function resetFilters() {
   filters.qty_max = ''
   filters.attribute_id = ''
   filters.attribute_value = ''
+  filters.location = ''
   filters.only_below_min = false
   filters.active = true
   filters.q = ''
@@ -331,6 +339,7 @@ function buildQuery(): Record<string, string> {
   if (filters.qty_min !== '') q.qty_min = filters.qty_min
   if (filters.qty_max !== '') q.qty_max = filters.qty_max
   if (filters.attribute_id !== '' && filters.attribute_value !== '') q.attribute = `${filters.attribute_id}:${filters.attribute_value}`
+  if (filters.location) q.location = filters.location
   if (filters.only_below_min) q.only_below_min = '1'
   if (!filters.active) q.active = '0'
   if (filters.q) q.q = filters.q
@@ -351,6 +360,7 @@ function applyQueryToPage(q: Record<string, string>) {
   filters.attribute_id = attribute ? Number(attribute[1]) : ''
   filters.attribute_value = attribute ? attribute[2] : ''
   if (filters.attribute_id !== '' && selectedAttribute.value?.data_type === 'enum') void ensureAttributeOptions(filters.attribute_id)
+  filters.location = q.location ?? ''
   filters.only_below_min = q.only_below_min === '1'
   filters.active = q.active !== '0'
   filters.q = q.q ?? ''
@@ -367,6 +377,7 @@ const COLUMNS: ColumnDef[] = [
   { key: 'avg_cost', labelKey: 'stock.items.col_avg_cost' },
   { key: 'sale_price', labelKey: 'stock.items.col_sale_price', defaultHidden: true },
   { key: 'min_qty', labelKey: 'stock.items.col_min_qty', defaultHidden: true },
+  { key: 'location', labelKey: 'stock.items.col_location', defaultHidden: true },
   { key: 'active', labelKey: 'stock.items.col_active', defaultHidden: true },
 ]
 const tbl = useTablePrefs('stock-items', COLUMNS)
@@ -427,14 +438,16 @@ function navigateQuickDetail(id: number) {
 }
 
 onMounted(async () => {
-  const [wh, mf, cat, tg, attr] = await Promise.all([
+  const [wh, mf, cat, tg, attr, loc] = await Promise.all([
     stockApi.listWarehouses(true).catch(() => [] as Warehouse[]),
     eshopApi.listManufacturers().catch(() => [] as Manufacturer[]),
     eshopApi.listCategories().catch(() => [] as Category[]),
     eshopApi.listTags().catch(() => [] as Tag[]),
     eshopApi.listAttributes().catch(() => [] as Attribute[]),
+    stockApi.listItemLocations().catch(() => [] as string[]),
   ])
   warehouses.value = wh
+  locations.value = loc
   manufacturers.value = mf.filter(x => !x.archived)
   categories.value = cat.filter(x => !x.archived)
   tags.value = tg.filter(x => !x.archived)
@@ -564,6 +577,12 @@ onBeforeUnmount(() => {
         <option value="">{{ t('stock.documents.filter_warehouse') }}: {{ t('common.all') }}</option>
         <option v-for="w in warehouses" :key="w.id" :value="w.id">{{ w.name }}</option>
       </select>
+      <select v-if="locations.length || filters.location" v-model="filters.location" @change="applyFilters" class="h-9 max-w-52 px-3 border border-neutral-300 rounded-md text-sm bg-surface"
+        :title="t('stock.items.filter_location')">
+        <option value="">{{ t('stock.items.filter_location') }}: {{ t('common.all') }}</option>
+        <option v-if="filters.location && !locations.includes(filters.location)" :value="filters.location">{{ filters.location }}</option>
+        <option v-for="location in locations" :key="location" :value="location">{{ location }}</option>
+      </select>
       <label class="inline-flex items-center gap-2 text-sm text-neutral-700 px-2 cursor-pointer">
         <input v-model="filters.only_below_min" type="checkbox" @change="applyFilters" />
         {{ t('stock.items.filter_below_min') }}
@@ -665,6 +684,7 @@ onBeforeUnmount(() => {
               <th v-if="tbl.isVisible('avg_cost')" class="px-3 py-2 text-right font-medium w-28">{{ t('stock.items.col_avg_cost') }}</th>
               <th v-if="tbl.isVisible('sale_price')" class="px-3 py-2 text-right font-medium w-28">{{ t('stock.items.col_sale_price') }}</th>
               <th v-if="tbl.isVisible('min_qty')" class="px-3 py-2 text-right font-medium w-24">{{ t('stock.items.col_min_qty') }}</th>
+              <th v-if="tbl.isVisible('location')" class="px-3 py-2 text-left font-medium">{{ t('stock.items.col_location') }}</th>
               <th v-if="tbl.isVisible('active')" class="px-3 py-2 text-center font-medium w-20">{{ t('stock.items.col_active') }}</th>
             </tr>
           </thead>
@@ -699,6 +719,7 @@ onBeforeUnmount(() => {
                 <template v-else>{{ i.effective_price != null ? formatMoney(Number(i.effective_price)) : (i.sale_price_without_vat != null ? formatMoney(Number(i.sale_price_without_vat)) : '—') }}</template>
               </td>
               <td v-if="tbl.isVisible('min_qty')" class="px-3 py-2 text-right font-mono whitespace-nowrap">{{ i.min_qty ?? '—' }}</td>
+              <td v-if="tbl.isVisible('location')" data-test="item-location" class="px-3 py-2">{{ i.location_text || '—' }}</td>
               <td v-if="tbl.isVisible('active')" class="px-3 py-2 text-center">
                 <span class="text-xs px-2 py-0.5 rounded font-medium" :class="i.is_active ? 'bg-success-50 text-success-600' : 'bg-neutral-100 text-neutral-500'">
                   {{ i.is_active ? t('common.yes') : t('common.no') }}
@@ -722,6 +743,7 @@ onBeforeUnmount(() => {
           <span class="text-xs px-2 py-0.5 rounded font-medium" :class="TYPE_BADGE[i.item_type]">{{ t(`stock.item_type.${i.item_type}`) }}</span>
         </div>
         <div class="font-medium mt-0.5">{{ i.name }}</div>
+        <div v-if="i.location_text" class="text-xs text-neutral-500 mt-0.5">{{ t('stock.items.col_location') }}: {{ i.location_text }}</div>
         <StockSearchMatchHint :match="i.search_match" />
         <div class="flex items-center justify-between mt-1.5 text-sm">
           <span :class="belowMin(i) ? 'text-danger-500 font-semibold' : 'text-neutral-600'">{{ qty(i) }} {{ i.unit }}</span>

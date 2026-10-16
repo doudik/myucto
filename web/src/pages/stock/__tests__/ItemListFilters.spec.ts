@@ -5,6 +5,7 @@ import { ref } from 'vue'
 const m = vi.hoisted(() => ({
   listItems: vi.fn(),
   listWarehouses: vi.fn(),
+  listItemLocations: vi.fn(),
   listManufacturers: vi.fn(),
   listCategories: vi.fn(),
   listTags: vi.fn(),
@@ -16,7 +17,7 @@ const m = vi.hoisted(() => ({
 }))
 
 vi.mock('@/api/stock', () => ({
-  stockApi: { listItems: m.listItems, listWarehouses: m.listWarehouses },
+  stockApi: { listItems: m.listItems, listWarehouses: m.listWarehouses, listItemLocations: m.listItemLocations },
 }))
 vi.mock('@/api/eshop', () => ({
   eshopApi: {
@@ -58,6 +59,7 @@ describe('ItemList catalog filters', () => {
     m.canWrite.mockReturnValue(false)
     m.listItems.mockResolvedValue({ data: [], meta: { total: 0, pages: 1 } })
     m.listWarehouses.mockResolvedValue([])
+    m.listItemLocations.mockResolvedValue([])
     m.listManufacturers.mockResolvedValue([{ id: 11, name: 'Acme', archived: false }])
     m.listCategories.mockResolvedValue([{ id: 12, name: 'Tools', path: '/12/', depth: 1, archived: false }])
     m.listTags.mockResolvedValue([{ id: 13, name: 'Sale', archived: false }])
@@ -106,6 +108,26 @@ describe('ItemList catalog filters', () => {
       attribute_filters: [],
       page: 1,
     }), expect.anything())
+  })
+
+  it('filters by item location, keeps it in saved views and shows the location column', async () => {
+    m.listItemLocations.mockResolvedValue(['Partner Brno', 'Showroom'])
+    m.listItems.mockResolvedValue({ data: [{ id: 41, sku: 'LOC-41', name: 'Located item', item_type: 'goods', unit: 'ks', is_active: true, min_qty: null, location_text: 'Showroom' }], meta: { total: 1, pages: 1 } })
+    const wrapper = mount(ItemList, { global: { stubs: { FilterBar: filterBar, SavedFiltersMenu: true, ColumnPicker: true, DensityToggle: true, SortableTh: true, EmptyState: true, RouterLink: { template: '<a><slot /></a>' } } } })
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="item-location"]').text()).toBe('Showroom')
+    const select = wrapper.get('select[title="stock.items.filter_location"]')
+    expect(select.findAll('option').map(option => option.text())).toContain('Showroom')
+    await select.setValue('Showroom')
+    await flushPromises()
+
+    expect(m.listItems).toHaveBeenLastCalledWith(expect.objectContaining({ location: 'Showroom', page: 1 }), expect.anything())
+    expect(m.savedConfig.getQuery()).toEqual(expect.objectContaining({ location: 'Showroom' }))
+
+    m.savedConfig.applyQuery({ location: 'Partner Brno' })
+    await flushPromises()
+    expect(m.listItems).toHaveBeenLastCalledWith(expect.objectContaining({ location: 'Partner Brno' }), expect.anything())
   })
 
   it('keeps an attribute value restored from a saved view and lazily loads its options', async () => {

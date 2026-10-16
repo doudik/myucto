@@ -9,7 +9,7 @@ use PDO;
 
 final class CatalogReadRepository
 {
-    private const BASE_FIELDS = ['sku', 'name', 'item_type', 'unit', 'ean', 'manufacturer_id', 'vat_rate_id', 'is_active', 'is_stocked', 'export_eshop', 'min_qty', 'weight_g', 'warranty_months', 'delivery_days'];
+    private const BASE_FIELDS = ['sku', 'name', 'item_type', 'unit', 'ean', 'manufacturer_id', 'vat_rate_id', 'is_active', 'is_stocked', 'export_eshop', 'min_qty', 'weight_g', 'warranty_months', 'delivery_days', 'location_text'];
     private const SATELLITES = [
         'i18n' => ['stock_item_i18n', 'locale, name, short_desc, description, seo_title, seo_description, seo_slug', 'locale'],
         'categories' => ['stock_item_categories', 'category_id, is_primary, display_order', 'display_order, category_id'],

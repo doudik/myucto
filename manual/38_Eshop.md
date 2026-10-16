@@ -1070,6 +1070,9 @@ nenabízejí se při zakládání nového zboží ani v exportu na e-shop.
 - Kategorie nelze přesunout do vlastního podstromu (ochrana proti zacyklení stromu).
 - Import zboží zvládne jen **XLSX nebo CSV do 50 MB** a nikdy nezakládá výrobce.
   Pořadí je proto: nejdřív číselníky (výrobci), pak import.
+- Sloupec **Umístění** jde namapovat při importu i vybrat do exportu katalogu. Hodnota
+  má nejvýš 100 znaků, delší řádek import odmítne. Prázdná buňka se řídí volbou
+  zachovat nebo vymazat prázdné hodnoty.
 - Čtenáři vidí všechny záložky i importní report, ale nemají tlačítka pro zápis
   (nový, upravit, smazat, import naostro).
 

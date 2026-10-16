@@ -3891,6 +3891,7 @@ final class Routes
             $g->put   ('/locations/{id:[0-9]+}',        [\MyInvoice\Action\Stock\StockTrackingAction::class, 'saveLocation']);
 
             $g->get   ('/items/search',                 [\MyInvoice\Action\Stock\StockItemAction::class, 'search']);
+            $g->get   ('/items/locations',              [\MyInvoice\Action\Stock\StockItemAction::class, 'locations']);
             // Nacenění řádků dokladu v jednotce řádku (balení) — issue #17.
             $g->post  ('/items/quote',                  [\MyInvoice\Action\Stock\StockItemQuoteAction::class, 'quote']);
             $g->get   ('/item-templates',               [\MyInvoice\Action\Stock\StockItemAction::class, 'templates']);

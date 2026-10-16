@@ -17285,6 +17285,23 @@ paths:
           schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
       responses:
         '200': { description: OK }
+  /api/v1/stock/items/locations:
+    parameters:
+      - $ref: '#/components/parameters/SupplierIdHeader'
+    get:
+      tags: [Stock]
+      summary: Použitá umístění skladových karet
+      description: |
+        Abecední seznam neprázdných hodnot `location_text` napříč kartami firmy (nejvýš 500).
+        Slouží jako nabídka pro zadání umístění a pro filtr `location` v seznamu karet.
+      responses:
+        '200':
+          description: Seznam umístění.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string, maxLength: 100 }
   /api/v1/stock/items/quote:
     parameters:
       - $ref: '#/components/parameters/SupplierIdHeader'
@@ -17563,10 +17580,16 @@ paths:
         schema:
           type: string
         description: |
-          Fulltextové hledání (SKU, název, EAN). Od 3 znaků hledá i v sériových
+          Fulltextové hledání (SKU, název, EAN, umístění). Od 3 znaků hledá i v sériových
           číslech a šaržích kusů a v textových parametrech karty. Řádek, který vyhověl
           jen takto, nese `search_match` (`kind` = serial | lot | attribute, `value`,
           `attribute` = název parametru); jinak je `search_match` null.
+      - in: query
+        name: location
+        description: Jen karty s tímto umístěním (`location_text`, přesná shoda bez ohledu na velikost písmen).
+        schema:
+          type: string
+          maxLength: 100
       - in: query
         name: only_below_min
         schema:
@@ -17755,6 +17778,12 @@ paths:
                   type:
                   - string
                   - 'null'
+                location_text:
+                  type:
+                  - string
+                  - 'null'
+                  maxLength: 100
+                  description: Umístění karty (volný text, kde kus fyzicky je). Prázdný text se uloží jako null.
                 revenue_account_code:
                   $ref: '#/components/schemas/ProductRevenueAccountCode'
                 expense_account_code:
@@ -17810,6 +17839,7 @@ paths:
                 intrastat_supplementary_unit_coefficient: { type: [string, number, "null"], exclusiveMinimum: 0 }
                 is_active: { type: boolean }
                 note: { type: [string, "null"] }
+                location_text: { type: [string, "null"], maxLength: 100, description: 'Umístění karty. Vynechaný klíč hodnotu nemění, prázdný text ji smaže.' }
                 revenue_account_code: { $ref: '#/components/schemas/ProductRevenueAccountCode' }
                 expense_account_code: { $ref: '#/components/schemas/ProductExpenseAccountCode' }
       responses:
@@ -19759,6 +19789,7 @@ paths:
     get:
       tags: [Stock]
       summary: Sestava — stav zásob
+      description: Řádky karta × sklad s množstvím, průměrnou cenou, hodnotou a umístěním karty (`location_text`).
       parameters:
         - in: query
           name: warehouse_id
@@ -30200,7 +30231,7 @@ components:
           default: [sku, name, ean, is_active]
           items:
             type: string
-            enum: [sku, name, item_type, unit, ean, manufacturer_id, vat_rate_id, is_active, is_stocked, export_eshop, min_qty, weight_g, warranty_months, delivery_days, i18n, categories, tag_ids, attributes, fees, media, prices, availability, costs, master, variant, effective, relations]
+            enum: [sku, name, item_type, unit, ean, manufacturer_id, vat_rate_id, is_active, is_stocked, export_eshop, min_qty, weight_g, warranty_months, delivery_days, location_text, i18n, categories, tag_ids, attributes, fees, media, prices, availability, costs, master, variant, effective, relations]
         locales:
           type: array
           minItems: 1
@@ -30346,7 +30377,7 @@ components:
           default: [sku, name, ean, is_active]
           items:
             type: string
-            enum: [sku, name, item_type, unit, ean, manufacturer_id, vat_rate_id, is_active, is_stocked, export_eshop, min_qty, weight_g, warranty_months, delivery_days, i18n, categories, tag_ids, attributes, fees, media, prices, availability, master, variant, effective, relations]
+            enum: [sku, name, item_type, unit, ean, manufacturer_id, vat_rate_id, is_active, is_stocked, export_eshop, min_qty, weight_g, warranty_months, delivery_days, location_text, i18n, categories, tag_ids, attributes, fees, media, prices, availability, master, variant, effective, relations]
         locales:
           type: array
           minItems: 1
@@ -30698,6 +30729,10 @@ components:
           enum: [CTM, NEL, CCT, GRM, GFI, KHO, KPO, KPH, KMA, KNI, KSH, KNE, KPP, KSD, KUR, MWH, LTR, LPA, MTR, MTK, MTQ, MQM, NPR, PCE, CEN, MIL, TJO, ZZZ, null]
         intrastat_supplementary_unit_coefficient:
           type: [string, 'null']
+        location_text:
+          type: [string, 'null']
+          maxLength: 100
+          description: Umístění karty (volný text, kde kus fyzicky je), nezávislé na lokacích skladu.
         master:
           type: [object, 'null']
           description: Neprodejný master varianty, pokud je karta připojena.

@@ -13,6 +13,7 @@ vi.mock('@/api/stock', () => ({
       lifecycle_status: 'ready',
       is_active: true,
       is_stocked: true,
+      location_text: 'Showroom',
     })),
     itemMovements: vi.fn(async () => ({ opening_balance: '0', items: [] })),
     itemMovementsExportUrl: vi.fn(() => ''),
@@ -44,6 +45,23 @@ vi.mock('vue-i18n', async (importOriginal) => ({
 }))
 
 import ItemDetail from '../ItemDetail.vue'
+
+describe('ItemDetail location', () => {
+  it('ukáže umístění karty v hlavičce detailu', async () => {
+    const wrapper = mount(ItemDetail, {
+      global: {
+        stubs: {
+          ActionBar: true, EmptyState: true, ItemDuplicateDialog: true, ItemTemplatesPanel: true,
+          ProductRelationsPanel: true, RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="item-location"]').text()).toBe('stock.items.col_location: Showroom')
+    wrapper.unmount()
+  })
+})
 
 describe('ItemDetail tabs', () => {
   it('přepíná záložky šipkami, Home a End a přesouvá fokus', async () => {

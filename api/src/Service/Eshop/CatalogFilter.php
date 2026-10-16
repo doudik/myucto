@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace MyInvoice\Service\Eshop;
 
 use MyInvoice\Repository\StockItemRepository;
+use MyInvoice\Service\Stock\StockItemLocation;
 
 final class CatalogFilter
 {
-    private const FILTER_KEYS = ['type', 'active', 'q', 'only_below_min', 'warehouse_id', 'manufacturer_id', 'category_id', 'vendor_id', 'tag_ids', 'missing', 'availability', 'qty_min', 'qty_max', 'attribute_filters', 'sort', 'direction', 'export_eshop'];
+    private const FILTER_KEYS = ['type', 'active', 'q', 'location', 'only_below_min', 'warehouse_id', 'manufacturer_id', 'category_id', 'vendor_id', 'tag_ids', 'missing', 'availability', 'qty_min', 'qty_max', 'attribute_filters', 'sort', 'direction', 'export_eshop'];
     private const TRANSPORT_KEYS = ['page', 'per_page', 'limit', 'offset', 'supplier_id'];
 
     /** @param array<string,mixed> $input @return array<string,mixed> */
@@ -25,6 +26,15 @@ final class CatalogFilter
         }
         if (self::nonEmpty($input['q'] ?? null)) {
             $out['q'] = self::string($input['q'], 'q');
+        }
+        if (self::nonEmpty($input['location'] ?? null)) {
+            $location = trim(self::string($input['location'], 'location'));
+            if (mb_strlen($location) > StockItemLocation::MAX_LENGTH) {
+                throw new \InvalidArgumentException('Filtr umístění je příliš dlouhý.');
+            }
+            if ($location !== '') {
+                $out['location'] = $location;
+            }
         }
         foreach (['active', 'export_eshop'] as $key) {
             if (array_key_exists($key, $input) && $input[$key] !== '') {

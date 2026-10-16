@@ -243,6 +243,7 @@ const openingBalanceNum = computed(() => Number(openingBalance.value))
           </div>
           <p class="text-sm text-neutral-500 mt-0.5">
             <span class="font-mono">{{ item.sku }}</span> · {{ t(`stock.item_type.${item.item_type}`) }} · {{ item.unit }}
+            <template v-if="item.location_text"> · <span data-test="item-location">{{ t('stock.items.col_location') }}: {{ item.location_text }}</span></template>
           </p>
         </div>
         <ActionBar :actions="actions" />

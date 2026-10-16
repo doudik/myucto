@@ -171,7 +171,17 @@ const form = ref<StockItemPayload>({
   intrastat_supplementary_unit_coefficient: null,
   is_active: true,
   note: null,
+  location_text: null,
 })
+// Použitá umístění ostatních karet jako nabídka, ať se stejné místo nepíše pokaždé jinak.
+const locationOptions = ref<string[]>([])
+async function loadLocationOptions() {
+  try {
+    locationOptions.value = await stockApi.listItemLocations()
+  } catch {
+    locationOptions.value = []
+  }
+}
 
 // ── E-shopová pole (agregát) ────────────────────────────────────────────
 const eshop = ref({
@@ -1128,6 +1138,7 @@ async function loadProduct(id: number) {
     intrastat_supplementary_unit_coefficient: p.intrastat_supplementary_unit_coefficient,
     is_active: p.is_active,
     note: p.note,
+    location_text: p.location_text ?? null,
   }
   skuTouched.value = true
   // e-shopová pole
@@ -1189,6 +1200,7 @@ function prepareEditorRows() {
 }
 
 onMounted(async () => {
+  void loadLocationOptions()
   try {
     await loadCodebooks()
     if (isEdit.value && itemId.value) {
@@ -1258,6 +1270,7 @@ function buildItemPayload(): StockItemPayload {
     intrastat_net_mass_kg: form.value.intrastat_net_mass_kg === '' ? null : form.value.intrastat_net_mass_kg,
     intrastat_supplementary_unit: supplementaryUnit,
     intrastat_supplementary_unit_coefficient: supplementaryUnit === 'ZZZ' || form.value.intrastat_supplementary_unit_coefficient === '' ? null : form.value.intrastat_supplementary_unit_coefficient,
+    location_text: nullableCode(form.value.location_text),
   }
 }
 
@@ -1623,6 +1636,16 @@ function onImgError(e: Event) {
                 class="w-full h-10 px-3 border border-neutral-300 rounded-md font-mono text-right focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
               <p class="text-xs text-neutral-500 mt-1">{{ t('stock.items.field_min_qty_hint') }}</p>
             </div>
+          </div>
+
+          <div>
+            <label for="stock-item-location" class="block text-sm font-medium text-neutral-700 mb-1">{{ t('stock.items.field_location') }}</label>
+            <input id="stock-item-location" v-model="form.location_text" data-test="item-location" type="text" maxlength="100" list="stock-item-location-options" autocomplete="off"
+              class="w-full h-10 px-3 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none" />
+            <datalist id="stock-item-location-options">
+              <option v-for="location in locationOptions" :key="location" :value="location" />
+            </datalist>
+            <p class="text-xs text-neutral-500 mt-1">{{ t('stock.items.field_location_hint') }}</p>
           </div>
 
           <div>
